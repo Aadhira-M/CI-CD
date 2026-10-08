@@ -1,0 +1,35 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+name: cleanup
+spec:
+steps:
+- name: remove-files
+image: alpine:3.20
+script: |
+#!/bin/sh
+echo "Cleaning workspace..."
+rm -rf /workspace/source/.pytest_cache
+rm -rf /workspace/source/**pycache**
+------------------------------------
+
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+name: test
+spec:
+workspaces:
+- name: source
+steps:
+- name: unit-tests
+image: python:3.11
+workingDir: /workspace/source
+script: |
+#!/bin/sh
+set -e
+pip install nose
+if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+nosetests
+volumeMounts:
+- name: source
+mountPath: /workspace/source
